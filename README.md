@@ -1,2 +1,2 @@
-# Symantyx-Code-Cathedral-
+# omega-code-index
 stores Symantyx organs and operators
