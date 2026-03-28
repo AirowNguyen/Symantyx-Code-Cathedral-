@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="manifest" href="manifest.json">
+<title>Ω Code Index</title>
+<style>
+:root {
+  --bg-deep:    #0a0a0f;
+  --bg-surface: #12121a;
+  --bg-card:    #1a1a26;
+  --bg-hover:   #22222f;
+  --bg-input:   #0e0e16;
+  --border:     #2a2a3a;
+  --border-focus:#4a4a6a;
+  --text:       #e0e0ec;
+  --text-muted: #7a7a8e;
+  --text-dim:   #50506a;
+  --accent:     #7c6aff;
+  --accent-glow:#7c6aff33;
+  --accent-dim: #5a4ecc;
+  --green:      #4ade80;
+  --green-dim:  #2a7a4a;
+  --amber:      #f59e0b;
+  --red:        #ef4444;
+  --red-dim:    #7f1d1d;
+  --cyan:       #22d3ee;
+  --radius:     12px;
+  --radius-sm:  8px;
+  --safe-top:   env(safe-area-inset-top, 0px);
+  --safe-bot:   env(safe-area-inset-bottom, 0px);
+  --header-h:   56px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+#app {
+  display: flex; flex-direction: column;
+  height: 100%; width: 100%;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bot);
+}
+
+.header {
+  height: var(--header-h);
+  min-height: var(--header-h);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 12px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+
+.header-title {
+  font-size: 18px; font-weight: 700;
+  letter-spacing: 0.5px;
+  flex: 1;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.header-title .omega { color: var(--accent); font-size: 22px; }
+
+.header-badge {
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 99px;
+  letter-spacing: 0.5px;
+}
+
+.header-btn {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--text-muted);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: all 0.15s;
+  font-size: 20px;
+}
+.header-btn:active { background: var(--bg-hover); color: var(--accent); }
+
+.view {
+  flex: 1; overflow: hidden;
+  display: none; flex-direction: column;
+}
+.view.active { display: flex; }
+
+/* INDEX VIEW */
+.search-bar {
+  padding: 12px 16px;
+  background: var(--bg-surface);
+}
+
+.search-input {
+  width: 100%; height: 42px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 14px 0 38px;
+  color: var(--text); font-size: 14px;
+  outline: none; transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-wrap { position: relative; }
+.search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim); font-size: 16px;
+  pointer-events: none;
+}
+
+.file-list {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 8px 12px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.file-group-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 16px 8px 6px;
+}
+
+.file-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-user-select: none; user-select: none;
+}
+.file-card:active { background: var(--bg-hover); border-color: var(--accent); transform: scale(0.985); }
+
+.file-icon {
+  width: 36px; height: 36px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 700;
+  text-transform: uppercase;
+}
+.file-icon.js   { background: #f59e0b22; color: #f59e0b; }
+.file-icon.py   { background: #3b82f622; color: #3b82f6; }
+.file-icon.html { background: #ef444422; color: #ef4444; }
+.file-icon.css  { background: #8b5cf622; color: #8b5cf6; }
+.file-icon.json { background: #22d3ee22; color: #22d3ee; }
+.file-icon.md   { background: #4ade8022; color: #4ade80; }
+.file-icon.yaml { background: #f97316aa; color: #f97316; }
+.file-icon.yml  { background: #f97316aa; color: #f97316; }
+.file-icon.tsx  { background: #06b6d422; color: #06b6d4; }
+.file-icon.ts   { background: #3b82f622; color: #3b82f6; }
+.file-icon.sh   { background: #a3a3a322; color: #a3a3a3; }
+.file-icon.other{ background: #6366f122; color: #6366f1; }
+
+.file-info { flex: 1; min-width: 0; }
+.file-name {
+  font-size: 14px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.file-path {
+  font-size: 11px; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.file-meta {
+  font-size: 10px; color: var(--text-dim);
+  margin-top: 3px; display: flex; gap: 10px;
+}
+.file-arrow { color: var(--text-dim); font-size: 18px; flex-shrink: 0; }
+
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 32px; text-align: center;
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+.empty-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
+.empty-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; max-width: 280px; }
+
+/* INGEST VIEW */
+.ingest-area {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 16px; gap: 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.drop-zone {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-card);
+  -webkit-user-select: none; user-select: none;
+}
+.drop-zone:active,
+.drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.drop-zone-icon { font-size: 36px; margin-bottom: 8px; }
+.drop-zone-title {
+  font-size: 15px; font-weight: 700; color: var(--text);
+  margin-bottom: 4px;
+}
+.drop-zone-sub {
+  font-size: 12px; color: var(--text-dim);
+  line-height: 1.5;
+}
+.drop-zone-sub b { color: var(--accent); font-weight: 600; }
+.drop-zone-formats {
+  margin-top: 10px;
+  display: flex; justify-content: center; gap: 6px; flex-wrap: wrap;
+}
+.format-tag {
+  font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 99px;
+  background: var(--bg-deep); color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.drop-zone input[type="file"] {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: pointer;
+  font-size: 0;
+}
+
+.drop-zone-loaded {
+  display: none;
+  align-items: center; gap: 12px;
+  text-align: left;
+}
+.drop-zone.has-file .drop-zone-empty { display: none; }
+.drop-zone.has-file .drop-zone-loaded { display: flex; }
+.drop-zone.has-file { border-style: solid; border-color: var(--green-dim); }
+
+.loaded-icon {
+  width: 42px; height: 42px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--green-dim); color: var(--green);
+  border-radius: var(--radius-sm); font-size: 20px;
+}
+.loaded-info { flex: 1; min-width: 0; }
+.loaded-name {
+  font-size: 14px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.loaded-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.loaded-clear {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 99px;
+  cursor: pointer; font-size: 14px;
+  z-index: 5; position: relative;
+}
+.loaded-clear:active { color: var(--red); border-color: var(--red); }
+
+.or-divider {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--text-dim); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.or-divider::before, .or-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--border);
+}
+
+.ingest-textarea {
+  min-height: 120px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  color: var(--text);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none; outline: none;
+  transition: border-color 0.2s;
+}
+.ingest-textarea:focus { border-color: var(--accent); }
+.ingest-textarea::placeholder { color: var(--text-dim); }
+
+.ingest-preview {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: none;
+}
+.ingest-preview.visible { display: block; }
+.ingest-preview h4 {
+  font-size: 12px; color: var(--green); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+.preview-file {
+  font-size: 13px; color: var(--text);
+  padding: 4px 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.preview-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+}
+.preview-new { color: var(--green); }
+.preview-update { color: var(--amber); }
+.preview-dot.update { background: var(--amber); }
+
+.preview-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.btn {
+  height: 48px;
+  border: none; border-radius: var(--radius);
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  -webkit-user-select: none; user-select: none;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:disabled { background: var(--bg-hover); color: var(--text-dim); cursor: default; transform: none; }
+.btn-danger  { background: var(--red-dim); color: var(--red); }
+
+.ingest-actions {
+  display: flex; gap: 10px;
+}
+.ingest-actions .btn { flex: 1; }
+
+/* VIEWER VIEW */
+.viewer-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+.viewer-back {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--accent);
+  font-size: 22px; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.viewer-back:active { background: var(--bg-hover); }
+.viewer-file-info { flex: 1; min-width: 0; }
+.viewer-filename {
+  font-size: 15px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.viewer-filepath {
+  font-size: 11px; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.viewer-actions { display: flex; gap: 4px; }
+
+.code-scroll {
+  flex: 1; overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.code-block {
+  padding: 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre;
+  color: var(--text);
+  min-height: 100%;
+}
+.code-block .ln {
+  display: inline-block;
+  width: 36px;
+  text-align: right;
+  padding-right: 12px;
+  color: var(--text-dim);
+  -webkit-user-select: none; user-select: none;
+  font-size: 11px;
+}
+
+.viewer-meta {
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-dim);
+}
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 80px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: 99px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 8px 32px #00000066;
+  opacity: 0; pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 999;
+  text-align: center;
+  max-width: 90vw;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.toast.success { border-color: var(--green-dim); }
+.toast.error   { border-color: var(--red); }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  display: flex; align-items: center; justify-content: center;
+  height: 56px; gap: 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+}
+.nav-btn {
+  flex: 1; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  background: none; border: none;
+  color: var(--text-dim);
+  font-size: 10px; font-weight: 600;
+  cursor: pointer; transition: color 0.15s;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.nav-btn .nav-icon { font-size: 20px; }
+.nav-btn.active { color: var(--accent); }
+.nav-btn:active { color: var(--accent); }
+
+/* CONFIRM MODAL */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: #000000aa;
+  display: none; align-items: center; justify-content: center;
+  z-index: 500; padding: 24px;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 320px; width: 100%;
+  text-align: center;
+}
+.modal-box h3 { font-size: 17px; margin-bottom: 8px; }
+.modal-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+.modal-btns { display: flex; gap: 10px; }
+.modal-btns .btn { flex: 1; height: 42px; font-size: 14px; }
+.btn-ghost {
+  background: var(--bg-hover); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div class="header">
+    <div class="header-title">
+      <span class="omega">Ω</span> Code Index
+    </div>
+    <span class="header-badge" id="fileCount">0 files</span>
+    <button class="header-btn" id="btnExportAll" title="Export All" onclick="exportAll()">↗</button>
+    <button class="header-btn" id="btnClearAll" title="Clear All" onclick="confirmClearAll()">🗑</button>
+  </div>
+
+  <!-- INDEX VIEW -->
+  <div class="view active" id="viewIndex">
+    <div class="search-bar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" id="searchInput" type="text"
+               placeholder="Search files…" autocomplete="off" spellcheck="false"
+               oninput="renderIndex()">
+      </div>
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <!-- INGEST VIEW -->
+  <div class="view" id="viewIngest">
+    <div class="ingest-area">
+
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".txt,.text,.md,.log,text/plain" />
+        <div class="drop-zone-empty">
+          <div class="drop-zone-icon">📄</div>
+          <div class="drop-zone-title">Drop file or tap to pick</div>
+          <div class="drop-zone-sub">Load your whole export file in one shot</div>
+          <div class="drop-zone-formats">
+            <span class="format-tag">.txt</span>
+            <span class="format-tag">.md</span>
+            <span class="format-tag">.log</span>
+            <span class="format-tag">any text</span>
+          </div>
+        </div>
+        <div class="drop-zone-loaded">
+          <div class="loaded-icon">✓</div>
+          <div class="loaded-info">
+            <div class="loaded-name" id="loadedName"></div>
+            <div class="loaded-meta" id="loadedMeta"></div>
+          </div>
+          <button class="loaded-clear" id="loadedClear" title="Remove file">✕</button>
+        </div>
+      </div>
+
+      <div class="or-divider">or paste below</div>
+
+      <textarea class="ingest-textarea" id="ingestInput"
+                placeholder="Paste exported code blocks here…"
+                spellcheck="false"
+                oninput="handleInput()"></textarea>
+
+      <div class="ingest-preview" id="ingestPreview">
+        <h4 id="previewTitle"></h4>
+        <div class="preview-scroll" id="previewScroll"></div>
+      </div>
+
+      <div class="ingest-actions">
+        <button class="btn btn-ghost" onclick="clearIngest()">Clear</button>
+        <button class="btn btn-primary" id="btnIngest" disabled onclick="runIngest()">
+          ⚡ Ingest
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- VIEWER VIEW -->
+  <div class="view" id="viewViewer">
+    <div class="viewer-header">
+      <button class="viewer-back" onclick="closeViewer()">←</button>
+      <div class="viewer-file-info">
+        <div class="viewer-filename" id="viewerFilename"></div>
+        <div class="viewer-filepath" id="viewerFilepath"></div>
+      </div>
+      <div class="viewer-actions">
+        <button class="header-btn" title="Copy" onclick="copyCurrentFile()">📋</button>
+        <button class="header-btn" title="Delete" onclick="confirmDeleteFile()">🗑</button>
+      </div>
+    </div>
+    <div class="code-scroll">
+      <div class="code-block" id="codeBlock"></div>
+    </div>
+    <div class="viewer-meta">
+      <span id="viewerLines">0 lines</span>
+      <span id="viewerSize">0 B</span>
+      <span id="viewerDate"></span>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-btn active" data-view="viewIndex" onclick="switchView('viewIndex')">
+      <span class="nav-icon">📁</span> Index
+    </button>
+    <button class="nav-btn" data-view="viewIngest" onclick="switchView('viewIngest')">
+      <span class="nav-icon">📥</span> Ingest
+    </button>
+  </div>
+
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMsg"></p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══ STORAGE ENGINE ═══ */
+var STORE_KEY = 'omega_code_index';
+
+function loadStore() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    return raw ? JSON.parse(raw) : { files: {}, meta: { created: Date.now(), version: 1 } };
+  } catch(e) {
+    return { files: {}, meta: { created: Date.now(), version: 1 } };
+  }
+}
+
+function saveStore(s) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(s));
+}
+
+var store = loadStore();
+var currentFilePath = null;
+var pendingText = '';
+
+/* ═══ PARSER ═══ */
+function parseExport(text) {
+  var entries = [];
+  var pattern = /^={3,}\s*FILE:\s*(.+?)\s*={3,}\s*$/gm;
+  var markers = [];
+  var match;
+
+  while ((match = pattern.exec(text)) !== null) {
+    markers.push({ path: match[1].trim(), index: match.index, end: match.index + match[0].length });
+  }
+
+  for (var i = 0; i < markers.length; i++) {
+    var start = markers[i].end;
+    var end = i + 1 < markers.length ? markers[i + 1].index : text.length;
+    var code = text.slice(start, end).replace(/^\n+/, '').replace(/\n+$/, '');
+    if (code.length > 0) {
+      entries.push({ path: markers[i].path, code: code });
+    }
+  }
+  return entries;
+}
+
+/* ═══ UTILITIES ═══ */
+function getExt(p)      { var s = p.split('.'); return s.length > 1 ? s.pop().toLowerCase() : ''; }
+function getFilename(p) { return p.split('/').pop(); }
+function getDirPath(p)  { var s = p.split('/'); return s.length > 1 ? s.slice(0,-1).join('/') : ''; }
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function formatDate(ts) {
+  var d = new Date(ts);
+  var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return m[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear()
+    + ' ' + String(d.getHours()).padStart(2,'0')
+    + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function extClass(ext) {
+  return ['js','py','html','css','json','md','yaml','yml','tsx','ts','sh'].indexOf(ext) !== -1 ? ext : 'other';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.className = 'toast'; }, 2400);
+}
+
+/* ═══ VIEW SWITCHING ═══ */
+function switchView(viewId) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.getElementById(viewId).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === viewId);
+  });
+  document.getElementById('bottomNav').style.display =
+    viewId === 'viewViewer' ? 'none' : 'flex';
+  if (viewId === 'viewIndex') renderIndex();
+}
+
+/* ═══ INDEX RENDERING ═══ */
+function renderIndex() {
+  var list = document.getElementById('fileList');
+  var paths = Object.keys(store.files).sort();
+  var query = document.getElementById('searchInput').value.toLowerCase().trim();
+  var count = paths.length;
+
+  document.getElementById('fileCount').textContent = count + ' file' + (count !== 1 ? 's' : '');
+
+  if (count === 0) {
+    list.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="empty-icon">📦</div>' +
+        '<div class="empty-title">No files yet</div>' +
+        '<div class="empty-desc">Tap <b>Ingest</b> to drop a file or paste code blocks into your index.</div>' +
+      '</div>';
+    return;
+  }
+
+  var filtered = query ? paths.filter(function(p) { return p.toLowerCase().indexOf(query) !== -1; }) : paths;
+
+  if (filtered.length === 0) {
+    list.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="empty-icon">🔍</div>' +
+        '<div class="empty-title">No matches</div>' +
+        '<div class="empty-desc">Try a different search term.</div>' +
+      '</div>';
+    return;
+  }
+
+  var groups = {};
+  filtered.forEach(function(p) {
+    var dir = getDirPath(p) || '⟨root⟩';
+    if (!groups[dir]) groups[dir] = [];
+    groups[dir].push(p);
+  });
+
+  var html = '';
+  Object.keys(groups).sort().forEach(function(dir) {
+    html += '<div class="file-group-label">' + escHtml(dir) + '</div>';
+    groups[dir].forEach(function(p) {
+      var f = store.files[p];
+      var ext = getExt(p);
+      var lines = f.code.split('\n').length;
+      html +=
+        '<div class="file-card" onclick="openFile(\'' + escAttr(p) + '\')">' +
+          '<div class="file-icon ' + extClass(ext) + '">' + (ext || '?') + '</div>' +
+          '<div class="file-info">' +
+            '<div class="file-name">' + escHtml(getFilename(p)) + '</div>' +
+            '<div class="file-path">' + escHtml(p) + '</div>' +
+            '<div class="file-meta">' +
+              '<span>' + lines + ' lines</span>' +
+              '<span>' + formatBytes(f.code.length) + '</span>' +
+              '<span>' + formatDate(f.updated) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<span class="file-arrow">›</span>' +
+        '</div>';
+    });
+  });
+  list.innerHTML = html;
+}
+
+/* ═══ FILE DROP / PICK ═══ */
+var dropZone  = document.getElementById('dropZone');
+var fileInput = document.getElementById('fileInput');
+var clearBtn  = document.getElementById('loadedClear');
+
+clearBtn.addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  clearFileInput();
+});
+
+fileInput.addEventListener('change', function() {
+  if (this.files && this.files[0]) readFile(this.files[0]);
+});
+
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', function() {
+  dropZone.classList.remove('drag-over');
+});
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) readFile(file);
+});
+
+function readFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    document.getElementById('loadedName').textContent = file.name;
+    document.getElementById('loadedMeta').textContent =
+      formatBytes(file.size) + '  ·  ' + text.split('\n').length + ' lines';
+    dropZone.classList.add('has-file');
+    pendingText = text;
+    document.getElementById('ingestInput').value = '';
+    document.getElementById('ingestInput').placeholder = 'File loaded above — or paste additional blocks here…';
+    updatePreview();
+  };
+  reader.onerror = function() {
+    showToast('Could not read file', 'error');
+  };
+  reader.readAsText(file);
+}
+
+function clearFileInput() {
+  fileInput.value = '';
+  dropZone.classList.remove('has-file');
+  pendingText = '';
+  document.getElementById('ingestInput').placeholder = 'Paste exported code blocks here…';
+  updatePreview();
+}
+
+/* ═══ INGEST ═══ */
+function getCombinedText() {
+  var pasteText = document.getElementById('ingestInput').value;
+  if (pendingText && pasteText) return pendingText + '\n' + pasteText;
+  return pendingText || pasteText;
+}
+
+function handleInput() { updatePreview(); }
+
+function updatePreview() {
+  var combined = getCombinedText();
+  var entries = parseExport(combined);
+  var prev    = document.getElementById('ingestPreview');
+  var btn     = document.getElementById('btnIngest');
+
+  if (entries.length === 0) {
+    prev.classList.remove('visible');
+    btn.disabled = true;
+    btn.innerHTML = '⚡ Ingest';
+    return;
+  }
+
+  var html = '';
+  entries.forEach(function(e) {
+    var isUpdate = !!store.files[e.path];
+    var cls   = isUpdate ? 'update' : 'new';
+    var label = isUpdate ? 'update' : 'new';
+    html +=
+      '<div class="preview-file ' + cls + '">' +
+        '<span class="preview-dot ' + cls + '"></span>' +
+        escHtml(e.path) + ' <span style="opacity:0.5">(' + label + ')</span>' +
+      '</div>';
+  });
+
+  document.getElementById('previewTitle').textContent =
+    'Detected ' + entries.length + ' file' + (entries.length !== 1 ? 's' : '');
+  document.getElementById('previewScroll').innerHTML = html;
+  prev.classList.add('visible');
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Ingest ' + entries.length + ' file' + (entries.length !== 1 ? 's' : '');
+}
+
+function runIngest() {
+  var combined = getCombinedText();
+  var entries = parseExport(combined);
+
+  if (entries.length === 0) {
+    showToast('No valid file blocks found', 'error');
+    return;
+  }
+
+  var now = Date.now();
+  var newCount = 0, updateCount = 0;
+
+  entries.forEach(function(e) {
+    var existing = store.files[e.path];
+    if (existing) {
+      updateCount++;
+      existing.code = e.code;
+      existing.updated = now;
+      existing.version = (existing.version || 1) + 1;
+    } else {
+      newCount++;
+      store.files[e.path] = {
+        code: e.code,
+        created: now,
+        updated: now,
+        version: 1
+      };
+    }
+  });
+
+  saveStore(store);
+
+  var parts = [];
+  if (newCount)    parts.push(newCount + ' new');
+  if (updateCount) parts.push(updateCount + ' updated');
+  showToast('✓ Ingested: ' + parts.join(', '), 'success');
+
+  clearIngest();
+  switchView('viewIndex');
+}
+
+function clearIngest() {
+  document.getElementById('ingestInput').value = '';
+  document.getElementById('ingestInput').placeholder = 'Paste exported code blocks here…';
+  document.getElementById('ingestPreview').classList.remove('visible');
+  document.getElementById('btnIngest').disabled = true;
+  document.getElementById('btnIngest').innerHTML = '⚡ Ingest';
+  clearFileInput();
+}
+
+/* ═══ FILE VIEWER ═══ */
+function openFile(path) {
+  var f = store.files[path];
+  if (!f) return;
+
+  currentFilePath = path;
+  document.getElementById('viewerFilename').textContent = getFilename(path);
+  document.getElementById('viewerFilepath').textContent = path;
+
+  var lines = f.code.split('\n');
+  var html = '';
+  lines.forEach(function(line, i) {
+    html += '<span class="ln">' + (i + 1) + '</span>' + escHtml(line) + '\n';
+  });
+  document.getElementById('codeBlock').innerHTML = html;
+
+  document.getElementById('viewerLines').textContent = lines.length + ' lines';
+  document.getElementById('viewerSize').textContent = formatBytes(f.code.length);
+  document.getElementById('viewerDate').textContent = formatDate(f.updated);
+
+  switchView('viewViewer');
+}
+
+function closeViewer() {
+  currentFilePath = null;
+  switchView('viewIndex');
+}
+
+function copyCurrentFile() {
+  var f = store.files[currentFilePath];
+  if (!f) return;
+  var out = '=== FILE: ' + currentFilePath + ' ===\n' + f.code;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(out).then(function() {
+      showToast('Copied to clipboard ✓', 'success');
+    }).catch(function() { fallbackCopy(out); });
+  } else {
+    fallbackCopy(out);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('Copied to clipboard ✓', 'success'); }
+  catch(e) { showToast('Copy failed — long-press to copy', 'error'); }
+  document.body.removeChild(ta);
+}
+
+/* ═══ EXPORT ALL ═══ */
+function exportAll() {
+  var paths = Object.keys(store.files).sort();
+  if (paths.length === 0) { showToast('No files to export', 'error'); return; }
+  var out = '';
+  paths.forEach(function(p) {
+    out += '=== FILE: ' + p + ' ===\n' + store.files[p].code + '\n\n';
+  });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(out.trim()).then(function() {
+      showToast('All ' + paths.length + ' files copied ✓', 'success');
+    }).catch(function() { fallbackCopy(out.trim()); });
+  } else {
+    fallbackCopy(out.trim());
+  }
+}
+
+/* ═══ DELETE / CLEAR ═══ */
+function showModal(title, msg, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalMsg').textContent = msg;
+  document.getElementById('modalConfirm').onclick = function() { closeModal(); onConfirm(); };
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+function confirmDeleteFile() {
+  if (!currentFilePath) return;
+  showModal(
+    'Delete File',
+    'Remove "' + getFilename(currentFilePath) + '" from the index? This cannot be undone.',
+    function() {
+      delete store.files[currentFilePath];
+      saveStore(store);
+      showToast('Deleted ✓', 'success');
+      closeViewer();
+    }
+  );
+}
+
+function confirmClearAll() {
+  var count = Object.keys(store.files).length;
+  if (count === 0) { showToast('Index is already empty', ''); return; }
+  showModal(
+    'Clear Entire Index',
+    'Remove all ' + count + ' files from the index? This cannot be undone.',
+    function() {
+      store.files = {};
+      saveStore(store);
+      showToast('Index cleared ✓', 'success');
+      renderIndex();
+    }
+  );
+}
+
+/* ═══ PWA: GENERATE ICONS VIA CANVAS AND CACHE THEM ═══ */
+async function generateAndCacheIcons() {
+  if (!('caches' in window)) return;
+  var cacheName = 'omega-code-index-v1';
+  var cache = await caches.open(cacheName);
+
+  var sizes = [192, 512];
+  for (var s = 0; s < sizes.length; s++) {
+    var size = sizes[s];
+    var url = './icon-' + size + '.png';
+
+    // Skip if already cached
+    var existing = await cache.match(url);
+    if (existing) continue;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext('2d');
+
+    // Rounded rectangle background
+    var r = size * 0.18;
+    ctx.fillStyle = '#7c6aff';
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(size - r, 0);
+    ctx.quadraticCurveTo(size, 0, size, r);
+    ctx.lineTo(size, size - r);
+    ctx.quadraticCurveTo(size, size, size - r, size);
+    ctx.lineTo(r, size);
+    ctx.quadraticCurveTo(0, size, 0, size - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // White Ω
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold ' + Math.round(size * 0.52) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('\u03A9', size / 2, size / 2 + size * 0.02);
+
+    var blob = await new Promise(function(resolve) {
+      canvas.toBlob(resolve, 'image/png');
+    });
+    var response = new Response(blob, {
+      headers: { 'Content-Type': 'image/png' }
+    });
+    await cache.put(new Request(url), response);
+  }
+  console.log('Omega icons generated and cached');
+}
+
+/* ═══ INIT ═══ */
+renderIndex();
+
+/* ═══ SERVICE WORKER REGISTRATION ═══ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      console.log('SW registered:', reg.scope);
+      // Generate icons after SW is ready
+      generateAndCacheIcons();
+    }).catch(function(err) {
+      console.log('SW registration skipped:', err);
+      // Still try to generate icons for future use
+      generateAndCacheIcons();
+    });
+  });
+}
+</script>
+</body>
+</html>
